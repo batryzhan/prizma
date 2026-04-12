@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Guild-Learn — социальный хаб для обмена знаниями между школьниками. Помогай и получай энергию!">
+  <meta name="theme-color" content="#08080c">
+
+  <title>Guild-Learn — Социальный хаб знаний</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔</text></svg>">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components/cards.css">
+  <link rel="stylesheet" href="css/components/forms.css">
+  <link rel="stylesheet" href="css/components/progress.css">
+  <link rel="stylesheet" href="css/components/sidebar.css">
+  <link rel="stylesheet" href="css/components/widget.css">
+</head>
+<body>
+  <!-- Scanline overlay effect -->
+  <div id="scanline" aria-hidden="true" style="
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.03) 2px,
+      rgba(0, 0, 0, 0.03) 4px
+    );
+    opacity: 0.4;
+  "></div>
+
+  <!-- Root SPA container -->
+  <main id="app"></main>
+
+  <!-- App entry point -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

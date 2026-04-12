@@ -1,0 +1,75 @@
+/* ═══════════════════════════════════════════════════
+   GUILD-LEARN — Design Tokens
+   Cyberpunk-Minimalism: Neon accents on void black
+   ═══════════════════════════════════════════════════ */
+
+:root {
+  /* ── Surfaces ── */
+  --bg-void:        #08080c;
+  --bg-panel:       #0e0e14;
+  --bg-card:        #12121a;
+  --bg-input:       #16161f;
+  --bg-hover:       #1a1a26;
+
+  /* ── Neon Palette ── */
+  --neon-purple:    #a855f7;
+  --neon-purple-dim:#7c3aed;
+  --neon-cyan:      #22d3ee;
+  --neon-cyan-dim:  #06b6d4;
+  --neon-pink:      #ec4899;
+  --neon-green:     #4ade80;
+  --neon-yellow:    #facc15;
+  --neon-orange:    #fb923c;
+
+  /* ── Text ── */
+  --text-primary:   #e4e4e7;
+  --text-secondary: #71717a;
+  --text-muted:     #3f3f46;
+  --text-inverse:   #08080c;
+
+  /* ── Borders ── */
+  --border-default: #1e1e2a;
+  --border-glow-purple: 0 0 0 1px var(--neon-purple), 0 0 20px rgba(168,85,247,.15);
+  --border-glow-cyan:   0 0 0 1px var(--neon-cyan),   0 0 20px rgba(34,211,238,.15);
+
+  /* ── Geometry ── */
+  --radius: 0px;
+
+  /* ── Spacing Scale ── */
+  --space-2xs: 4px;
+  --space-xs:  8px;
+  --space-sm:  12px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* ── Typography ── */
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --text-xs:   0.75rem;
+  --text-sm:   0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.375rem;
+  --text-2xl:  1.75rem;
+  --text-3xl:  2.25rem;
+
+  /* ── Transitions ── */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+
+  /* ── Z-index Scale ── */
+  --z-base:    1;
+  --z-dropdown: 10;
+  --z-modal:   100;
+  --z-toast:   200;
+
+  /* ── Glows ── */
+  --glow-purple: 0 0 30px rgba(168,85,247,.2), 0 0 60px rgba(168,85,247,.08);
+  --glow-cyan:   0 0 30px rgba(34,211,238,.2), 0 0 60px rgba(34,211,238,.08);
+}

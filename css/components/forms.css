@@ -1,0 +1,242 @@
+/* ═══════════════════════════════════════════════════
+   GUILD-LEARN — Forms (Brutalist, no-radius)
+   ═══════════════════════════════════════════════════ */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+}
+
+.form-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  transition: border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  border-color: var(--neon-purple);
+  box-shadow: var(--border-glow-purple);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: var(--font-sans);
+  line-height: 1.5;
+}
+
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2371717a' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.form-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: var(--space-sm) var(--space-lg);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all var(--duration-fast) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn--primary {
+  background: var(--neon-purple);
+  border-color: var(--neon-purple);
+  color: #fff;
+}
+
+.btn--primary:hover {
+  background: var(--neon-purple-dim);
+  box-shadow: var(--glow-purple);
+  transform: translateY(-1px);
+}
+
+.btn--primary:active {
+  transform: translateY(0);
+}
+
+.btn--secondary {
+  background: transparent;
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+.btn--secondary:hover {
+  border-color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
+.btn--danger {
+  background: transparent;
+  border-color: var(--neon-pink);
+  color: var(--neon-pink);
+}
+
+.btn--danger:hover {
+  background: var(--neon-pink);
+  color: #fff;
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+
+.btn--ghost:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ── SOS Create Button (floating) ── */
+.btn-create-sos {
+  position: relative;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  padding: var(--space-sm) var(--space-lg);
+  background: linear-gradient(135deg, var(--neon-purple), var(--neon-purple-dim));
+  border: none;
+  border-radius: var(--radius);
+  color: #fff;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: all var(--duration-fast) var(--ease-out);
+  overflow: hidden;
+}
+
+.btn-create-sos::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--neon-purple-dim), var(--neon-purple));
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.btn-create-sos:hover {
+  box-shadow: var(--glow-purple);
+  transform: translateY(-1px);
+}
+
+.btn-create-sos:hover::before {
+  opacity: 1;
+}
+
+.btn-create-sos span {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Form Modal ── */
+.sos-form__title {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-lg);
+  color: var(--neon-purple);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.sos-form__actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  margin-top: var(--space-lg);
+}
+
+/* ── Energy cost selector ── */
+.energy-selector {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.energy-option {
+  flex: 1;
+  padding: var(--space-sm);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.energy-option:hover {
+  border-color: var(--neon-yellow);
+}
+
+.energy-option.active {
+  border-color: var(--neon-yellow);
+  background: rgba(250, 204, 21, 0.08);
+  color: var(--neon-yellow);
+  box-shadow: 0 0 15px rgba(250, 204, 21, 0.15);
+}
+
+.energy-option__value {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  display: block;
+}
+
+.energy-option__label {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  display: block;
+  margin-top: 2px;
+}

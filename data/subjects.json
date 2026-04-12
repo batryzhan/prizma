@@ -1,0 +1,57 @@
+{
+  "subjects": [
+    {
+      "id": "math",
+      "name": "Математика",
+      "nameEn": "Math",
+      "icon": "∑",
+      "color": "purple"
+    },
+    {
+      "id": "physics",
+      "name": "Физика",
+      "nameEn": "Physics",
+      "icon": "⚛",
+      "color": "cyan"
+    },
+    {
+      "id": "biology",
+      "name": "Биология",
+      "nameEn": "Biology",
+      "icon": "🧬",
+      "color": "green"
+    },
+    {
+      "id": "chemistry",
+      "name": "Химия",
+      "nameEn": "Chemistry",
+      "icon": "⚗",
+      "color": "orange"
+    },
+    {
+      "id": "history",
+      "name": "История",
+      "nameEn": "History",
+      "icon": "📜",
+      "color": "yellow"
+    },
+    {
+      "id": "english",
+      "name": "Английский",
+      "nameEn": "English",
+      "icon": "🌐",
+      "color": "pink"
+    }
+  ],
+  "energyCosts": [10, 20, 30, 50],
+  "ranks": [
+    { "minScore": 0, "name": "Новичок", "nameEn": "Newbie" },
+    { "minScore": 50, "name": "Ученик", "nameEn": "Apprentice" },
+    { "minScore": 150, "name": "Знаток", "nameEn": "Adept" },
+    { "minScore": 350, "name": "Мастер", "nameEn": "Master" },
+    { "minScore": 700, "name": "Мудрец", "nameEn": "Sage" },
+    { "minScore": 1500, "name": "Легенда", "nameEn": "Legend" }
+  ],
+  "xpPerLevel": 100,
+  "initialEnergy": 100
+}

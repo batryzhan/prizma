@@ -1,0 +1,269 @@
+/* ═══════════════════════════════════════════════════
+   GUILD-LEARN — SOS Cards
+   ═══════════════════════════════════════════════════ */
+
+.sos-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  padding: var(--space-lg);
+  transition: border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+  animation: fadeIn var(--duration-normal) var(--ease-out) both;
+  position: relative;
+  overflow: hidden;
+}
+
+.sos-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--neon-purple), var(--neon-cyan));
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.sos-card:hover {
+  border-color: var(--neon-purple);
+  box-shadow: var(--glow-purple);
+  transform: translateY(-2px);
+}
+
+.sos-card:hover::before {
+  opacity: 1;
+}
+
+/* ── Card Header ── */
+.sos-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+.sos-card__subject {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: var(--space-2xs) var(--space-sm);
+  border: 1px solid;
+  border-radius: var(--radius);
+}
+
+.sos-card__subject--math {
+  color: var(--neon-purple);
+  border-color: var(--neon-purple);
+  background: rgba(168, 85, 247, 0.08);
+}
+
+.sos-card__subject--physics {
+  color: var(--neon-cyan);
+  border-color: var(--neon-cyan);
+  background: rgba(34, 211, 238, 0.08);
+}
+
+.sos-card__subject--biology {
+  color: var(--neon-green);
+  border-color: var(--neon-green);
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.sos-card__subject--chemistry {
+  color: var(--neon-orange);
+  border-color: var(--neon-orange);
+  background: rgba(251, 146, 60, 0.08);
+}
+
+.sos-card__subject--history {
+  color: var(--neon-yellow);
+  border-color: var(--neon-yellow);
+  background: rgba(250, 204, 21, 0.08);
+}
+
+.sos-card__subject--english {
+  color: var(--neon-pink);
+  border-color: var(--neon-pink);
+  background: rgba(236, 72, 153, 0.08);
+}
+
+.sos-card__time {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+/* ── Card Body ── */
+.sos-card__body {
+  margin-bottom: var(--space-md);
+}
+
+.sos-card__question {
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin-bottom: var(--space-sm);
+}
+
+.sos-card__author {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.sos-card__author-avatar {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, var(--neon-purple), var(--neon-cyan));
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-inverse);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sos-card__author-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Card Footer ── */
+.sos-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border-default);
+}
+
+.sos-card__reward {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--neon-yellow);
+}
+
+.sos-card__reward-icon {
+  font-size: var(--text-lg);
+}
+
+/* ── Help Button ── */
+.btn-help {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid var(--neon-cyan);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--neon-cyan);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all var(--duration-fast) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-help::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--neon-cyan);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+  z-index: 0;
+}
+
+.btn-help:hover {
+  color: var(--text-inverse);
+  box-shadow: var(--glow-cyan);
+}
+
+.btn-help:hover::before {
+  opacity: 1;
+}
+
+.btn-help span {
+  position: relative;
+  z-index: 1;
+}
+
+.btn-help:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn-help:disabled:hover::before {
+  opacity: 0;
+}
+
+.btn-help:disabled:hover {
+  color: var(--neon-cyan);
+  box-shadow: none;
+}
+
+/* ── Card list ── */
+.sos-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.sos-list--empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3xl) var(--space-xl);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.sos-list--empty .empty-icon {
+  font-size: 48px;
+  margin-bottom: var(--space-md);
+  opacity: 0.4;
+}
+
+.sos-list--empty .empty-text {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+/* Card resolved state */
+.sos-card--resolved {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.sos-card--resolved::after {
+  content: '✓ RESOLVED';
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--neon-green);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
