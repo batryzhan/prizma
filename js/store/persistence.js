@@ -2,7 +2,10 @@
 // GUILD-LEARN — Persistence Layer (localStorage)
 // ═══════════════════════════════════════════════════
 
-const STORAGE_KEY = 'guildlearn_state';
+// v2 keeps Prizma data separate while still reading the old Guild-Learn key.
+// That makes the redesign non-destructive for people who used the prototype.
+const STORAGE_KEY = 'prizma:v2';
+const LEGACY_STORAGE_KEY = 'guildlearn_state';
 
 /**
  * Load the full state from localStorage.
@@ -11,7 +14,10 @@ const STORAGE_KEY = 'guildlearn_state';
 export function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (raw) return JSON.parse(raw);
+
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    return legacy ? JSON.parse(legacy) : null;
   } catch (e) {
     console.error('[Persistence] Failed to load state:', e);
     return null;
@@ -34,6 +40,7 @@ export function saveState(state) {
  */
 export function clearState() {
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
 }
 
 /**

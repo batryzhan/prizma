@@ -4,7 +4,7 @@
 
 import { getState, setState } from '../store/state.js';
 import { uid, clamp } from './utils.js';
-import { showToast } from '../main.js';
+import { showToast } from '../app/notifications.js';
 
 /**
  * Create a new SOS request.

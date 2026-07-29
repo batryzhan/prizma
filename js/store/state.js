@@ -77,6 +77,8 @@ export function initState() {
     _state.user.requestsCreated = _state.user.requestsCreated || 0;
     if (!_state.guild) _state.guild = createDefaultState().guild;
     if (!_state.chatMessages) _state.chatMessages = createDefaultState().chatMessages;
+    // Persist under the current Prizma storage key after a legacy load.
+    _persist();
   } else {
     _state = createDefaultState();
     // Seed some example SOS requests

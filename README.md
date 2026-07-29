@@ -1,53 +1,80 @@
-# ⚔️ Guild-Learn: Cyberpunk Social Hub for Knowledge
+# Prizma
 
-## 🌐 Overview
-**Guild-Learn** is a brutalist, cyberpunk-minimalist social platform designed for students to exchange knowledge and help each other. Built as a high-performance **Single Page Application (SPA)** using pure Vanilla technologies, it rewards helpfulness with "Utility Score" and Energy.
+Prizma is now a **Flutter Web** learning workspace. It combines a public landing page with a responsive, local-first dashboard for peer help, learning focus, progress, and community.
 
-> "Knowledge is the only currency that matters in the sprawl."
+The visual language takes inspiration from Horizon UI's clear dashboard hierarchy, but this project contains no Chakra UI or React code.
 
-## 🚀 Technical Stack
-- **Core**: HTML5, Vanilla JavaScript (ES6+ Modules)
-- **Styling**: CSS3 (Modern Flexbox/Grid, Custom Variables)
-- **Architecture**: Single Page Application (SPA) with custom State Management
-- **Persistence**: Browser `localStorage`
-- **Design**: Cyberpunk-Minimalism (Dark Mode, Neon Accents, Zero Border Radius)
+## Included screens
 
-## ✨ Core Features
-- **SOS Feed**: A real-time stream of help requests categorized by subjects (Math, Physics, Biology, etc.).
-- **Energy Economy**: Create requests by spending energy; earn energy and XP by helping others.
-- **Player Progression**: Level up your character and increase your "Utility Score" to gain new ranks (from Newbie to Legend).
-- **Guild Chat**: Real-time interaction widget with other members of your guild.
-- **Reactive Sidebar**: Live tracking of your level, energy, and contribution stats.
+- Landing page with product overview and call to action
+- Dashboard with learning metrics, daily plan, level progress, SOS preview, and guild pulse
+- SOS requests: search, filters, creation, helping, and safe deletion of your own request
+- Subjects catalogue with focused study cards
+- Guild with members, invite flow, and local chat
+- Leaderboard, progress, profile, and settings screens
+- Responsive sidebar / drawer navigation and light or dark mode
 
-## 🛠 Getting Started
+## Run locally
 
-### No Installation Required
-This project is a pure frontend application. You don't need `npm install` for basic usage.
+Use Flutter 3.44+ (Dart 3.12+):
 
-### Running Locally
-1. Clone the repository.
-2. Open `index.html` in your browser.
-3. *Recommended*: Use a simple local server to support ES6 Modules:
-   ```bash
-   # Using Python 3
-   python3 -m http.server 8080
-   
-   # Using Node.js (serve)
-   npx serve .
-   ```
+```bash
+cd prizma
+flutter pub get
+flutter analyze
+flutter test
+flutter run -d web-server --web-port=8080
+```
 
-## 📂 Project Structure
-- `index.html`: The shell of the SPA.
-- `css/`: Modular stylesheets (variables, layout, components).
-- `js/`: Modular logic (store, core engine, functional components).
-- `data/`: Configuration and mock data.
+Open the URL printed by Flutter. For a production bundle:
 
-## 📈 Roadmap
-Check out [todo.md](todo.md) for planned features and improvements.
+```bash
+flutter build web
+```
 
-## 📜 License
+The deployable output is created in `build/web`.
+
+## Routes
+
+Flutter Web uses hash routes, so direct links work on static hosts:
+
+| URL | Screen |
+| --- | --- |
+| `#/` | Landing |
+| `#/dashboard` | Dashboard |
+| `#/sos` | SOS requests |
+| `#/subjects` | Subjects |
+| `#/guild` | Guild and chat |
+| `#/leaderboard` | Leaderboard |
+| `#/progress` | Progress |
+| `#/profile` | Profile |
+| `#/settings` | Settings |
+
+## Flutter architecture
+
+```text
+lib/
+├── app/                    # MaterialApp, routes, theme, responsive app shell
+├── core/
+│   ├── models/             # immutable domain models and configuration
+│   ├── persistence/        # SharedPreferences and one-time legacy import
+│   └── state/              # PrizmaStore: SOS, XP, energy, preferences
+├── features/               # landing, dashboard, SOS, subjects, community, personal
+└── shared/widgets/         # reusable Prizma UI primitives
+test/                       # deterministic PrizmaStore coverage
+web/                        # Flutter Web bootstrap and manifest
+```
+
+`PrizmaStore` is the single local source of truth. It persists the Flutter state through `SharedPreferences`, keeps XP/energy/SOS rules typed and validated, and can import a prior browser prototype snapshot (`prizma:v2` or `guildlearn_state`) once when both apps run on the same web origin.
+
+## Migration note
+
+`lib/main.dart` and `web/index.html` are the active application entry points. The former Vanilla HTML/CSS/JS files remain in the repository as migration reference material and are not used by the Flutter build; this preserves existing work without mixing it into the deployed Flutter app.
+
+## Scope
+
+This is a local-first product demo. It does not include sign-in, server synchronization, real-time messaging, moderation, or a production backend. Do not store sensitive personal information in local demo data.
+
+## License
+
 MIT License.
-
----
-*Built with neon and code by the Guild-Learn team.*# prizma
-# GLearn

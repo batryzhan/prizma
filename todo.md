@@ -39,4 +39,3 @@ This document outlines the planned improvements and feature requests to take **G
 - [ ] **JSDoc & Documentation**: Fully document the core engine and store modules.
 
 ---
-*Created by Antigravity AI for the Guild-Learn development team.*

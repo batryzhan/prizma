@@ -1,410 +1,385 @@
-// ═══════════════════════════════════════════════════
-// GUILD-LEARN — Main App / Router
-// ═══════════════════════════════════════════════════
+// Prizma application bootstrap.
+// The UI is intentionally framework-free: a small hash router composes public
+// and dashboard layouts while the existing store remains the single source of truth.
 
-import { initState, getState, setState, subscribe } from './store/state.js';
+import { CONFIG, getState, initState, setState, subscribe } from './store/state.js';
 import { clearState } from './store/persistence.js';
-import { renderSidebar, updateSidebar } from './components/Sidebar.js';
-import { renderSOSFeed, renderFeedHeader } from './components/SOSFeed.js';
-import { renderSOSForm, attachSOSFormListeners } from './components/SOSForm.js';
-import { renderGuildChat, attachGuildChatListeners } from './components/GuildChat.js';
-import { helpWithRequest, deleteSOSRequest } from './core/engine.js';
-import { getI18n } from './core/i18n.js';
+import { createSOSRequest, deleteSOSRequest, helpWithRequest } from './core/engine.js';
+import { icon } from './app/icons.js';
+import { normaliseRoute, renderAppShell, renderLanding, renderNotFound } from './app/layout.js';
+import { showToast } from './app/notifications.js';
+import { renderRoutePage, renderSosResults } from './app/pages.js';
+import { escapeHtml } from './app/renderers.js';
 
-// ── State ──
-let activeFilter = 'all';
-let searchQuery = '';
+const PREFS_KEY = 'prizma_ui_preferences';
+const app = document.getElementById('app');
 
-// ── Init ──
-document.addEventListener('DOMContentLoaded', () => {
-  initState();
-  renderApp();
-  subscribe(() => {
-    refreshFeed();
-    updateSidebar();
-    refreshGuild();
-  });
+const ui = {
+  requestFilter: 'all',
+  requestSearch: '',
+  sidebarOpen: false,
+  theme: 'light',
+  reduceMotion: false,
+  completedTasks: [],
+};
 
-  // Energy Regeneration: +1 Energy every 15 seconds, up to 100
-  setInterval(() => {
-    const s = getState();
-    if (s.user.energy < 100) {
-      setState(st => {
-        st.user.energy += 1;
-      });
-    }
-  }, 15000);
-});
-
-// ── Full App Render ──
-function renderApp() {
-  const app = document.getElementById('app');
-  const state = getState();
-
-  app.innerHTML = `
-    ${renderSidebar()}
-    <div class="feed" id="feed-panel">
-      ${renderFeedHeader(activeFilter, searchQuery)}
-      <div class="feed__body" id="feed-body">
-        ${renderSOSFeed(activeFilter, searchQuery)}
-      </div>
-    </div>
-    ${renderGuildChat()}
-  `;
-
-  attachAllListeners();
-}
-
-// ── Refresh just the feed body ──
-function refreshFeed() {
-  const feedBody = document.getElementById('feed-body');
-  if (feedBody) {
-    feedBody.innerHTML = renderSOSFeed(activeFilter, searchQuery);
-    attachFeedCardListeners();
+function loadPreferences() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}');
+    if (saved.theme === 'dark' || saved.theme === 'light') ui.theme = saved.theme;
+    ui.reduceMotion = Boolean(saved.reduceMotion);
+    ui.completedTasks = Array.isArray(saved.completedTasks) ? saved.completedTasks : [];
+  } catch {
+    // A broken local preference should never block the learning space.
   }
 }
 
-// ── Refresh just the guild list ──
-function refreshGuild() {
-  const guildList = document.getElementById('guild-list');
-  if (guildList) {
-    const { user, guild } = getState();
-    const t = getI18n(user.lang);
-    const online = guild.filter(g => g.status === 'online');
-    const away = guild.filter(g => g.status === 'away');
-    const offline = guild.filter(g => g.status === 'offline');
-
-    const memberListHTML = (members, statusLabel) => {
-      if (members.length === 0) return '';
-      return `
-        <div class="guild__group">
-          <div class="guild__group-label">${statusLabel} — ${members.length}</div>
-          ${members.map(m => `
-            <div class="guild__member" data-member-id="${m.id}">
-              <div class="guild__member-avatar guild__member-avatar--${m.status}">${m.avatar}</div>
-              <div class="guild__member-info">
-                <span class="guild__member-name">${m.name}</span>
-                <span class="guild__member-score">⚡${m.score}</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    };
-
-    guildList.innerHTML = `
-      ${memberListHTML(online, t.guild.online)}
-      ${memberListHTML(away, t.guild.away)}
-      ${memberListHTML(offline, t.guild.offline)}
-    `;
-  }
+function savePreferences() {
+  localStorage.setItem(PREFS_KEY, JSON.stringify({
+    theme: ui.theme,
+    reduceMotion: ui.reduceMotion,
+    completedTasks: ui.completedTasks,
+  }));
 }
 
-// ── Attach all event listeners ──
-function attachAllListeners() {
-  attachFeedCardListeners();
-  attachFilterListeners();
-  attachSearchListeners();
-  attachCreateSOSListener();
-  attachGuildChatListeners();
-  attachSidebarListeners();
-  attachLangListener();
+function applyPreferences() {
+  document.documentElement.dataset.theme = ui.theme;
+  document.documentElement.classList.toggle('reduce-motion', ui.reduceMotion);
 }
 
-// ── Language Toggle ──
-function attachLangListener() {
-  const btn = document.getElementById('btn-lang-toggle');
-  if (btn) {
-    btn.addEventListener('click', openLangModal);
-  }
-}
-
-function openLangModal() {
-  const { user } = getState();
-  const html = `
-    <div class="modal-overlay" id="lang-modal-overlay">
-      <div class="modal-panel" style="max-width: 320px;">
-        <div class="sos-form__title">
-          <span>🌐</span> Language / Язык
-        </div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-md); margin-top: var(--space-lg);">
-          <button class="btn btn--secondary lang-option ${user.lang === 'ru' ? 'btn--primary' : ''}" data-lang="ru">
-            🇷🇺 Русский (Russian)
-          </button>
-          <button class="btn btn--secondary lang-option ${user.lang === 'en' ? 'btn--primary' : ''}" data-lang="en">
-            🇺🇸 English (Английский)
-          </button>
-        </div>
-        <div class="sos-form__actions" style="margin-top: var(--space-xl);">
-          <button type="button" class="btn btn--ghost" id="btn-cancel-lang">Close / Закрыть</button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  document.body.insertAdjacentHTML('beforeend', html);
-
-  const overlay = document.getElementById('lang-modal-overlay');
-  const cancelBtn = document.getElementById('btn-cancel-lang');
-
-  const close = () => {
-    overlay.style.opacity = '0';
-    setTimeout(() => overlay.remove(), 150);
+function routeTitle(route) {
+  const titles = {
+    landing: 'Prizma — учиться в своём ритме',
+    dashboard: 'Обзор — Prizma',
+    sos: 'SOS-запросы — Prizma',
+    subjects: 'Предметы — Prizma',
+    guild: 'Гильдия — Prizma',
+    leaderboard: 'Рейтинг — Prizma',
+    progress: 'Прогресс — Prizma',
+    profile: 'Профиль — Prizma',
+    settings: 'Настройки — Prizma',
   };
-
-  cancelBtn.addEventListener('click', close);
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) close();
-    const btn = e.target.closest('.lang-option');
-    if (btn) {
-      const lang = btn.dataset.lang;
-      setState(s => {
-        s.user.lang = lang;
-      });
-      close();
-      renderApp();
-    }
-  });
+  return titles[route] || 'Prizma';
 }
 
-// ── Search Listener ──
-function attachSearchListeners() {
-  const searchInput = document.getElementById('feed-search');
-  if (!searchInput) return;
+function render() {
+  const route = normaliseRoute();
+  const state = getState();
+  document.title = routeTitle(route);
+  document.body.classList.toggle('body--app', route !== 'landing' && route !== 'not-found');
+  document.body.classList.toggle('body--landing', route === 'landing');
 
-  searchInput.addEventListener('input', (e) => {
-    searchQuery = e.target.value;
-    refreshFeed();
-  });
-}
-
-// ── Feed card action listeners (help / delete) ──
-function attachFeedCardListeners() {
-  const feedBody = document.getElementById('feed-body');
-  if (!feedBody) return;
-
-  feedBody.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-action]');
-    if (!btn) return;
-
-    const action = btn.dataset.action;
-    const sosId = btn.dataset.sosId;
-
-    if (action === 'help') {
-      // Add a micro-animation
-      const card = btn.closest('.sos-card');
-      if (card) {
-        card.style.transition = 'all 0.3s ease';
-        card.style.boxShadow = '0 0 40px rgba(34,211,238,.4)';
-      }
-      setTimeout(() => {
-        helpWithRequest(sosId);
-      }, 200);
-    }
-
-    if (action === 'delete') {
-      deleteSOSRequest(sosId);
-    }
-  });
-}
-
-// ── Filter listeners ──
-function attachFilterListeners() {
-  const filtersContainer = document.getElementById('feed-filters');
-  if (!filtersContainer) return;
-
-  filtersContainer.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-filter]');
-    if (!btn) return;
-
-    activeFilter = btn.dataset.filter;
-
-    // Update active state
-    filtersContainer.querySelectorAll('.feed__filter-btn').forEach(b =>
-      b.classList.remove('feed__filter-btn--active')
-    );
-    btn.classList.add('feed__filter-btn--active');
-
-    refreshFeed();
-  });
-}
-
-// ── Create SOS button ──
-function attachCreateSOSListener() {
-  const createBtn = document.getElementById('btn-create-sos');
-  if (!createBtn) return;
-
-  createBtn.addEventListener('click', () => {
-    openSOSModal();
-  });
-}
-
-// ── SOS Modal ──
-function openSOSModal() {
-  // Insert the modal
-  const modalHTML = renderSOSForm();
-  document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-  attachSOSFormListeners(() => {
-    closeSOSModal();
-    refreshFeed();
-    updateSidebar();
-  });
-
-  // Focus the textarea
-  setTimeout(() => {
-    const textarea = document.getElementById('sos-question');
-    if (textarea) textarea.focus();
-  }, 100);
-}
-
-function closeSOSModal() {
-  const overlay = document.getElementById('sos-modal-overlay');
-  if (overlay) {
-    overlay.style.opacity = '0';
-    setTimeout(() => overlay.remove(), 150);
+  if (route === 'landing') {
+    app.innerHTML = renderLanding(state, ui);
+  } else if (route === 'not-found') {
+    app.innerHTML = renderNotFound();
+  } else {
+    app.innerHTML = renderAppShell(route, renderRoutePage(route, state, ui), state, ui);
   }
 }
 
-// ── Sidebar listeners ──
-function attachSidebarListeners() {
+function navigate(route) {
+  const target = route === 'landing' ? '#/' : `#/${route}`;
+  ui.sidebarOpen = false;
+  if (window.location.hash === target) {
+    render();
+  } else {
+    window.location.hash = target;
+  }
+}
+
+function openModal(id, content) {
+  closeModal();
+  document.body.insertAdjacentHTML('beforeend', `<div class="modal-backdrop" id="${id}" role="presentation"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="${id}-title">${content}</section></div>`);
+  const focusTarget = document.querySelector(`#${id} input, #${id} textarea, #${id} select, #${id} button`);
+  if (focusTarget) setTimeout(() => focusTarget.focus(), 0);
+}
+
+function closeModal() {
+  document.querySelectorAll('.modal-backdrop').forEach(element => element.remove());
+}
+
+function openSosModal() {
   const { user } = getState();
-  const t = getI18n(user.lang);
-
-  // Reset button
-  const resetBtn = document.getElementById('btn-reset');
-  if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
-      if (confirm(t.modal.reset_confirm)) {
-        clearState();
-        initState();
-        renderApp();
-        showToast(t.modal.toast_reset, 'info');
-      }
-    });
-  }
-
-  // Edit profile
-  const editBtn = document.getElementById('btn-edit-profile');
-  if (editBtn) {
-    editBtn.addEventListener('click', () => {
-      openProfileModal();
-    });
-  }
+  openModal('sos-modal', `<div class="modal__head"><div><span class="eyebrow">Новый SOS-запрос</span><h2 id="sos-modal-title">Давай распутаем задачу</h2></div><button class="icon-button" data-action="close-modal" type="button" aria-label="Закрыть">${icon('close', 20)}</button></div>
+    <p class="modal__intro">Чем яснее контекст, тем легче гильдии дать полезный ответ.</p>
+    <form class="modal-form" id="sos-form">
+      <label class="form-label"><span>Предмет</span><select id="sos-subject" name="subject">${CONFIG.subjects.map(subject => `<option value="${subject.id}">${subject.icon} ${escapeHtml(subject.name)}</option>`).join('')}</select></label>
+      <label class="form-label"><span>В чём нужна помощь?</span><textarea id="sos-question" name="question" minlength="10" maxlength="500" required placeholder="Например: не понимаю, с чего начать решать систему уравнений…"></textarea><small class="form-count"><span id="sos-char-count">0</span> / 500</small></label>
+      <fieldset class="reward-picker"><legend>Награда за помощь <em>У тебя ${Number(user.energy) || 0} энергии</em></legend><div>${CONFIG.energyCosts.map((cost, index) => `<button class="reward-option ${index === 0 ? 'reward-option--active' : ''}" type="button" data-action="choose-reward" data-reward="${cost}"><strong>${icon('bolt', 15)} ${cost}</strong><span>${['Быстрый вопрос', 'Нужно объяснение', 'Сложная задача', 'Большой разбор'][index]}</span></button>`).join('')}</div></fieldset>
+      <input type="hidden" id="sos-reward" value="${CONFIG.energyCosts[0]}">
+      <div class="modal-form__actions"><button class="button button--ghost" type="button" data-action="close-modal">Отмена</button><button class="button button--primary" type="submit">Отправить запрос ${icon('arrowUpRight', 16)}</button></div>
+    </form>`);
 }
 
-// ── Profile Edit Modal ──
 function openProfileModal() {
   const { user } = getState();
-  const t = getI18n(user.lang);
+  openModal('profile-modal', `<div class="modal__head"><div><span class="eyebrow">Твой профиль</span><h2 id="profile-modal-title">Как к тебе обращаться?</h2></div><button class="icon-button" data-action="close-modal" type="button" aria-label="Закрыть">${icon('close', 20)}</button></div>
+    <form class="modal-form" id="profile-form"><label class="form-label"><span>Имя в Prizma</span><input id="profile-name" type="text" maxlength="20" required value="${escapeHtml(user.name || '')}" placeholder="Например, Алия"></label><label class="form-label"><span>Инициалы на аватаре</span><input id="profile-avatar" type="text" maxlength="2" required value="${escapeHtml(user.avatar || '')}" placeholder="А"></label><p class="form-note">Аватар сохраняется в браузере. Здесь можно оставить только понятные инициалы — так сообществу проще тебя узнать.</p><div class="modal-form__actions"><button class="button button--ghost" type="button" data-action="close-modal">Отмена</button><button class="button button--primary" type="submit">Сохранить ${icon('check', 16)}</button></div></form>`);
+}
 
-  const html = `
-    <div class="modal-overlay" id="profile-modal-overlay">
-      <div class="modal-panel">
-        <div class="sos-form__title">
-          <span>✎</span> ${t.modal.profile_title}
-        </div>
-        <form id="profile-form">
-          <div class="form-group">
-            <label class="form-label" for="profile-name">${t.modal.player_name}</label>
-            <input type="text" class="form-input" id="profile-name"
-                   value="${user.name}" maxlength="20" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="profile-avatar">${t.modal.avatar_symbol}</label>
-            <input type="text" class="form-input" id="profile-avatar"
-                   value="${user.avatar}" maxlength="2" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="profile-avatar-url">${t.modal.avatar_url}</label>
-            <input type="text" class="form-input" id="profile-avatar-url"
-                   value="${user.avatarImage || ''}" placeholder="https://..." />
-          </div>
-          <div class="form-group">
-            <label class="form-label">${t.modal.avatar_file}</label>
-            <input type="file" id="profile-avatar-file" accept="image/*" class="form-input" style="padding: 10px;" />
-          </div>
-          <div class="sos-form__actions">
-            <button type="button" class="btn btn--secondary" id="btn-cancel-profile">${t.modal.btn_cancel}</button>
-            <button type="submit" class="btn btn--primary" id="btn-save-profile">${t.modal.btn_save}</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  `;
+function openMemberModal() {
+  openModal('member-modal', `<div class="modal__head"><div><span class="eyebrow">Новый участник</span><h2 id="member-modal-title">Пригласить в гильдию</h2></div><button class="icon-button" data-action="close-modal" type="button" aria-label="Закрыть">${icon('close', 20)}</button></div>
+    <form class="modal-form" id="member-form"><label class="form-label"><span>Имя</span><input id="member-name" type="text" maxlength="20" required placeholder="Например, Sana_02"></label><div class="form-two-columns"><label class="form-label"><span>Вклад</span><input id="member-score" type="number" min="0" max="9999" value="100" required></label><label class="form-label"><span>Статус</span><select id="member-status"><option value="online">В сети</option><option value="away">Отошёл</option><option value="offline">Не в сети</option></select></label></div><div class="modal-form__actions"><button class="button button--ghost" type="button" data-action="close-modal">Отмена</button><button class="button button--primary" type="submit">Добавить ${icon('plus', 16)}</button></div></form>`);
+}
 
-  document.body.insertAdjacentHTML('beforeend', html);
+function selectedReward(button) {
+  const value = Number(button.dataset.reward);
+  const hidden = document.getElementById('sos-reward');
+  if (hidden && CONFIG.energyCosts.includes(value)) hidden.value = String(value);
+  document.querySelectorAll('.reward-option').forEach(option => option.classList.toggle('reward-option--active', option === button));
+}
 
-  const overlay = document.getElementById('profile-modal-overlay');
-  const cancelBtn = document.getElementById('btn-cancel-profile');
-  const form = document.getElementById('profile-form');
-  const fileInput = document.getElementById('profile-avatar-file');
-
-  const close = () => {
-    overlay.style.opacity = '0';
-    setTimeout(() => overlay.remove(), 150);
-  };
-
-  cancelBtn.addEventListener('click', close);
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) close();
-  });
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = document.getElementById('profile-name').value.trim();
-    const avatarChar = document.getElementById('profile-avatar').value.trim();
-    const avatarUrl = document.getElementById('profile-avatar-url').value.trim();
-    const file = fileInput.files[0];
-
-    if (!name || !avatarChar) return;
-
-    const finalize = (imgData) => {
-      setState(s => {
-        s.user.name = name;
-        s.user.avatar = avatarChar.charAt(0).toUpperCase();
-        s.user.avatarImage = imgData || null;
-      });
-      close();
-      renderApp();
-      showToast(t.modal.toast_save, 'success');
-    };
-
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (ev) => finalize(ev.target.result);
-      reader.readAsDataURL(file);
-    } else {
-      finalize(avatarUrl);
+function handleAction(action, target) {
+  switch (action) {
+    case 'toggle-sidebar':
+      ui.sidebarOpen = !ui.sidebarOpen;
+      render();
+      break;
+    case 'toggle-theme':
+      ui.theme = ui.theme === 'dark' ? 'light' : 'dark';
+      savePreferences();
+      applyPreferences();
+      render();
+      break;
+    case 'toggle-motion':
+      ui.reduceMotion = !ui.reduceMotion;
+      savePreferences();
+      applyPreferences();
+      render();
+      break;
+    case 'focus-global-search':
+      navigate('sos');
+      setTimeout(() => document.getElementById('request-search')?.focus(), 50);
+      break;
+    case 'scroll-to': {
+      const section = document.getElementById(target.dataset.section);
+      section?.scrollIntoView({ behavior: ui.reduceMotion ? 'auto' : 'smooth', block: 'start' });
+      break;
     }
+    case 'show-notifications':
+      showToast('Новых личных уведомлений пока нет. Лента SOS уже ждёт тебя.', 'info');
+      break;
+    case 'create-sos':
+      openSosModal();
+      break;
+    case 'close-modal':
+      closeModal();
+      break;
+    case 'choose-reward':
+      selectedReward(target);
+      break;
+    case 'help-sos':
+      helpWithRequest(target.dataset.sosId);
+      break;
+    case 'delete-sos':
+      if (window.confirm('Удалить этот SOS-запрос? Энергия вернётся на баланс.')) deleteSOSRequest(target.dataset.sosId);
+      break;
+    case 'filter-sos':
+      ui.requestFilter = target.dataset.filter || 'all';
+      render();
+      break;
+    case 'clear-request-filters':
+      ui.requestFilter = 'all';
+      ui.requestSearch = '';
+      render();
+      break;
+    case 'sort-sos':
+      showToast('Лента уже отсортирована: сначала новые и открытые запросы.', 'info');
+      break;
+    case 'view-subject-requests':
+      ui.requestFilter = target.dataset.subjectId || 'all';
+      ui.requestSearch = '';
+      navigate('sos');
+      break;
+    case 'open-resource':
+      showToast(`Материал «${target.dataset.resource || 'ресурс'}» появится в следующем модуле.`, 'info');
+      break;
+    case 'open-add-member':
+      openMemberModal();
+      break;
+    case 'toggle-task': {
+      const id = target.dataset.taskId;
+      if (!id) break;
+      ui.completedTasks = ui.completedTasks.includes(id)
+        ? ui.completedTasks.filter(taskId => taskId !== id)
+        : [...ui.completedTasks, id];
+      savePreferences();
+      render();
+      break;
+    }
+    case 'show-weekly-chart':
+      showToast('График показывает локальную учебную активность за последние 7 дней.', 'info');
+      break;
+    case 'show-calendar-day':
+      showToast(`День ${target.dataset.day}: добавь свой учебный блок в ближайшем обновлении.`, 'info');
+      break;
+    case 'edit-profile':
+      openProfileModal();
+      break;
+    case 'export-data':
+      exportData();
+      break;
+    case 'reset-data':
+      resetData();
+      break;
+    default:
+      break;
+  }
+}
+
+function submitSos(form) {
+  const subject = document.getElementById('sos-subject')?.value;
+  const question = document.getElementById('sos-question')?.value.trim();
+  const reward = Number(document.getElementById('sos-reward')?.value);
+  if (!subject || !question || question.length < 10 || !CONFIG.energyCosts.includes(reward)) return;
+  if (createSOSRequest({ subject, question, reward })) closeModal();
+}
+
+function submitProfile() {
+  const name = document.getElementById('profile-name')?.value.trim();
+  const avatar = document.getElementById('profile-avatar')?.value.trim();
+  if (!name || !avatar) return;
+  setState(state => {
+    state.user.name = name.slice(0, 20);
+    state.user.avatar = avatar.slice(0, 2).toUpperCase();
+  });
+  closeModal();
+  showToast('Профиль обновлён.', 'success');
+}
+
+function submitMember() {
+  const name = document.getElementById('member-name')?.value.trim();
+  const score = Math.max(0, Math.min(9999, Number(document.getElementById('member-score')?.value) || 0));
+  const status = document.getElementById('member-status')?.value;
+  if (!name || !['online', 'away', 'offline'].includes(status)) return;
+  setState(state => {
+    state.guild.push({
+      id: `guild_${Date.now().toString(36)}`,
+      name: name.slice(0, 20),
+      avatar: name.slice(0, 1).toUpperCase(),
+      score,
+      status,
+    });
+  });
+  closeModal();
+  showToast(`${name} теперь в гильдии.`, 'success');
+}
+
+function submitChat() {
+  const input = document.getElementById('guild-chat-input');
+  const text = input?.value.trim();
+  if (!text) return;
+  setState(state => {
+    state.chatMessages = [...(state.chatMessages || []), {
+      from: state.user.name,
+      text: text.slice(0, 200),
+      time: Date.now(),
+    }].slice(-50);
   });
 }
 
-// ── Toast System ──
-export function showToast(message, type = 'info') {
-  let container = document.getElementById('toast-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'toast-container';
-    container.className = 'toast-container';
-    document.body.appendChild(container);
+function exportData() {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    app: 'Prizma',
+    state: getState(),
+    preferences: { theme: ui.theme, reduceMotion: ui.reduceMotion, completedTasks: ui.completedTasks },
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const href = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = href;
+  link.download = `prizma-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(href);
+  showToast('Локальная копия данных скачана.', 'success');
+}
+
+function resetData() {
+  if (!window.confirm('Сбросить локальные данные Prizma? Это действие нельзя отменить без ранее скачанной копии.')) return;
+  clearState();
+  initState();
+  ui.completedTasks = [];
+  savePreferences();
+  render();
+  showToast('Prizma начала с чистого листа.', 'info');
+}
+
+function handleClick(event) {
+  const routeButton = event.target.closest('[data-route]');
+  if (routeButton) {
+    event.preventDefault();
+    navigate(routeButton.dataset.route);
+    return;
   }
 
-  const icons = {
-    success: '✓',
-    error: '✕',
-    info: 'ℹ',
-  };
+  const actionTarget = event.target.closest('[data-action]');
+  if (actionTarget) {
+    event.preventDefault();
+    handleAction(actionTarget.dataset.action, actionTarget);
+    return;
+  }
 
-  const toast = document.createElement('div');
-  toast.className = `toast toast--${type}`;
-  toast.innerHTML = `<span>${icons[type] || 'ℹ'}</span> ${message}`;
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(20px)';
-    toast.style.transition = 'all 0.3s ease';
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+  const backdrop = event.target.closest('.modal-backdrop');
+  if (backdrop && event.target === backdrop) closeModal();
 }
+
+function handleInput(event) {
+  if (event.target.id === 'request-search') {
+    ui.requestSearch = event.target.value;
+    const results = document.getElementById('sos-results');
+    if (results) results.innerHTML = renderSosResults(getState(), ui);
+  }
+  if (event.target.id === 'sos-question') {
+    const counter = document.getElementById('sos-char-count');
+    if (counter) counter.textContent = event.target.value.length;
+  }
+}
+
+function handleSubmit(event) {
+  const form = event.target;
+  if (!(form instanceof HTMLFormElement)) return;
+  if (!['sos-form', 'profile-form', 'member-form', 'guild-chat-form'].includes(form.id)) return;
+  event.preventDefault();
+  if (form.id === 'sos-form') submitSos(form);
+  if (form.id === 'profile-form') submitProfile();
+  if (form.id === 'member-form') submitMember();
+  if (form.id === 'guild-chat-form') submitChat();
+}
+
+function handleKeydown(event) {
+  if (event.key === 'Escape') closeModal();
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    event.preventDefault();
+    navigate('sos');
+    setTimeout(() => document.getElementById('request-search')?.focus(), 50);
+  }
+}
+
+function bootstrap() {
+  loadPreferences();
+  applyPreferences();
+  initState();
+  render();
+  subscribe(render);
+  window.addEventListener('hashchange', render);
+  document.addEventListener('click', handleClick);
+  document.addEventListener('input', handleInput);
+  document.addEventListener('submit', handleSubmit);
+  document.addEventListener('keydown', handleKeydown);
+
+  // Regenerate a unit of energy every 15 seconds, capped at 100.
+  window.setInterval(() => {
+    const state = getState();
+    if (state?.user?.energy < 100) {
+      setState(next => { next.user.energy += 1; });
+    }
+  }, 15000);
+}
+
+document.addEventListener('DOMContentLoaded', bootstrap);
+
+export { showToast };
